@@ -8,14 +8,18 @@ public class Player : MonoBehaviour
     private Rigidbody2D rb;
     private Animator anim;
 
-    [Header("Movement")]
+    [Header("Movement Details")]
     [SerializeField] private float moveSpeed;
     [SerializeField] private float jumpForce;
+    [SerializeField] private float doubleJumpForce;
+    
+    private bool canDoubleJump;
 
     [Header("Colision Infos")]
     [SerializeField] private float groundCheckDistance;
     [SerializeField] private LayerMask whatIsGround;
     private bool isGrounded;
+    private bool isInAir;
 
     private float xInput;
 
@@ -30,6 +34,7 @@ public class Player : MonoBehaviour
 
     void Update()
     {
+        UpdateInAirStatus();
         HandleColsions();
         HandleInput();
         HandleMovement();
@@ -41,8 +46,19 @@ public class Player : MonoBehaviour
     {
         xInput = Input.GetAxisRaw("Horizontal");
         
-        if(Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        if(Input.GetKeyDown(KeyCode.Space))
+            HandleJump();
+    }
+
+    private void HandleJump()
+    {
+        if(isGrounded)
             Jump();
+        
+        else if(canDoubleJump)
+        {
+            DoubleJump();
+        }
     }
 
     private void HandleMovement()
@@ -68,8 +84,13 @@ public class Player : MonoBehaviour
         isGrounded = Physics2D.Raycast(transform.position, Vector2.down, groundCheckDistance, whatIsGround);
     }
 
-    //Jump Function
     private void Jump() => rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+    
+    private void DoubleJump()
+    {
+        canDoubleJump = false;
+        rb.velocity = new Vector2(rb.velocity.x, doubleJumpForce);
+    }
 
 
     private void Flip() 
@@ -77,6 +98,26 @@ public class Player : MonoBehaviour
         facingDirection = facingDirection * -1;
         transform.Rotate(0, 180, 0);
         isFacingRight = !isFacingRight;
+    }
+
+    private void UpdateInAirStatus()
+    {
+        if(isGrounded  && isInAir )
+            HandleLanded();
+
+        if(!isGrounded && !isInAir )
+            HandleInAir();
+    }
+
+    private void HandleLanded()
+    {
+        isInAir = false;
+        canDoubleJump = true;
+    }
+
+    private void HandleInAir()
+    {
+        isInAir = true;
     }
 
     private void OnDrawGizmos() 
