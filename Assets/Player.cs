@@ -26,11 +26,12 @@ public class Player : MonoBehaviour
     [SerializeField] private float KnockbackDuration =1;
     [SerializeField] private Vector2 knockBackPower;
     private bool isKnocked;
-    private bool canBeKnocked;
 
-    [Header("Buffer Jump")]
+    [Header("Jump")]
     [SerializeField] private float bufferJumpWindow = .25f;
-    private float bufferJumpPressed = -1;
+    private float bufferJumpActivated = -1;
+    [SerializeField] private float coyoteJumpWindow = .5f;
+    private float coyoteJumpActivated = -1;
 
 
     [Header("Colision")]
@@ -139,25 +140,16 @@ public class Player : MonoBehaviour
             
     }
     
-    private void RequestBufferJump()
-    {
-        if(isInAir)
-            bufferJumpPressed = Time.time;
-    }
-
-    private void AttemptBufferJump()
-    {
-        if(Time.time < bufferJumpPressed + bufferJumpWindow) 
-        {
-            bufferJumpPressed = 0f;
-            Jump();
-        }
-    }
-    
     private void HandleJump()
     {
-        if(isGrounded)
+        bool coyoteJumpAvailable =  Time.time < coyoteJumpActivated  + coyoteJumpWindow;
+
+        if(isGrounded || coyoteJumpAvailable) 
+        {
+            if(coyoteJumpAvailable)
             Jump();
+        }
+            
 
         else if(isWallDetected && !isGrounded)
         {
@@ -168,6 +160,8 @@ public class Player : MonoBehaviour
         {
             DoubleJump();
         }
+
+        CancelCoyoteJump();
             
     }
 
@@ -191,6 +185,24 @@ public class Player : MonoBehaviour
 
     }
 
+    private void RequestBufferJump()
+    {
+        if(isInAir)
+            bufferJumpActivated = Time.time;
+    }
+
+    private void AttemptBufferJump()
+    {
+        if(Time.time < bufferJumpActivated + bufferJumpWindow) 
+        {
+            bufferJumpActivated = Time.time - 1;
+            Jump();
+        }
+    }
+
+    private void ActivateCoyoteJump() => coyoteJumpActivated = Time.time;
+    private void CancelCoyoteJump() => coyoteJumpActivated = Time.time - 1;
+
     private IEnumerator WallJumpRoutine()
     {
         isWallJumping = true;
@@ -203,12 +215,10 @@ public class Player : MonoBehaviour
 
     private IEnumerator knockbackRoutine()
     {
-        canBeKnocked = false;
         isKnocked = true;
 
         yield return new WaitForSeconds(KnockbackDuration);
 
-        canBeKnocked = true;
         isKnocked = false;
     }
 
@@ -226,7 +236,10 @@ public class Player : MonoBehaviour
             HandleLanded();
 
         if(!isGrounded && !isInAir )
-            HandleInAir();
+        {
+            BecomeAirborne();
+        }
+            
     }
 
     private void HandleLanded()
@@ -237,9 +250,15 @@ public class Player : MonoBehaviour
         AttemptBufferJump();
     }
 
-    private void HandleInAir()
+    private void BecomeAirborne()
     {
         isInAir = true;
+
+        if(rb.velocity.y <= 0)
+        {
+            ActivateCoyoteJump();
+        }
+            
     }
 
     private void OnDrawGizmos() 
