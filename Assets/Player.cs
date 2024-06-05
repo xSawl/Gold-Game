@@ -146,7 +146,6 @@ public class Player : MonoBehaviour
 
         if(isGrounded || coyoteJumpAvailable) 
         {
-            if(coyoteJumpAvailable)
             Jump();
         }
             
