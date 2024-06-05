@@ -28,7 +28,9 @@ public class Player : MonoBehaviour
     private bool isKnocked;
     private bool canBeKnocked;
 
-
+    [Header("Buffer Jump")]
+    [SerializeField] private float bufferJumpWindow = .25f;
+    private float bufferJumpPressed = -1;
 
 
     [Header("Colision")]
@@ -81,16 +83,6 @@ public class Player : MonoBehaviour
         rb.velocity = new Vector2(knockBackPower.x * -facingDirection, knockBackPower.y);
     }
 
-
-    private void HandleInput()
-    {
-        xInput = Input.GetAxisRaw("Horizontal");
-        yInput = Input.GetAxisRaw("Vertical");
-        
-        if(Input.GetKeyDown(KeyCode.Space))
-            HandleJump();
-    }
-
     private void HandleWallSlide()
     {
         bool canWallSlide = isWallDetected && rb.velocity.y < 0;
@@ -127,12 +119,41 @@ public class Player : MonoBehaviour
         anim.SetBool("isWallDetected", isWallDetected);
     }
 
+
     private void HandleColsions()
     {          
         isGrounded = Physics2D.Raycast(transform.position, Vector2.down, groundCheckDistance, whatIsGround);
         isWallDetected = Physics2D.Raycast(transform.position, Vector2.right * facingDirection, wallCheckDistance, whatIsGround);
     }
 
+    private void HandleInput()
+    {
+        xInput = Input.GetAxisRaw("Horizontal");
+        yInput = Input.GetAxisRaw("Vertical");
+        
+        if(Input.GetKeyDown(KeyCode.Space))
+        {
+            HandleJump();
+            RequestBufferJump();
+        }
+            
+    }
+    
+    private void RequestBufferJump()
+    {
+        if(isInAir)
+            bufferJumpPressed = Time.time;
+    }
+
+    private void AttemptBufferJump()
+    {
+        if(Time.time < bufferJumpPressed + bufferJumpWindow) 
+        {
+            bufferJumpPressed = 0f;
+            Jump();
+        }
+    }
+    
     private void HandleJump()
     {
         if(isGrounded)
@@ -212,6 +233,8 @@ public class Player : MonoBehaviour
     {
         isInAir = false;
         canDoubleJump = true;
+        
+        AttemptBufferJump();
     }
 
     private void HandleInAir()

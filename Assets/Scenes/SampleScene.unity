@@ -490,6 +490,7 @@ MonoBehaviour:
   wallJumpForce: {x: 7, y: 14}
   KnockbackDuration: 0.65
   knockBackPower: {x: 4, y: 7}
+  bufferJumpWindow: 0.2
   groundCheckDistance: 0.8
   wallCheckDistance: 0.65
   whatIsGround:
