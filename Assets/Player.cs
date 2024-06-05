@@ -1,22 +1,30 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO.Compression;
+using System.Numerics;
 using TreeEditor;
 using UnityEngine;
+using Vector2 = UnityEngine.Vector2;
 
 public class Player : MonoBehaviour
 {
     private Rigidbody2D rb;
     private Animator anim;
 
-    [Header("Movement Details")]
+    [Header("Movement")]
     [SerializeField] private float moveSpeed;
     [SerializeField] private float jumpForce;
     [SerializeField] private float doubleJumpForce;
-    
     private bool canDoubleJump;
 
-    [Header("Colision Infos")]
+    [Header("Wall Interractions")]
+    [SerializeField] private float wallJumpDuration = .6f;
+    [SerializeField] private Vector2 wallJumpForce;
+    private bool isWallJumping;
+
+
+
+    [Header("Colision")]
     [SerializeField] private float groundCheckDistance;
     [SerializeField] private float wallCheckDistance;
     [SerializeField] private LayerMask whatIsGround;
@@ -68,20 +76,12 @@ public class Player : MonoBehaviour
         rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * yModifer);
     }
 
-    private void HandleJump()
-    {
-        if(isGrounded)
-            Jump();
-        
-        else if(canDoubleJump)
-        {
-            DoubleJump();
-        }
-    }
-
     private void HandleMovement()
     {   
         if(isWallDetected)
+            return;
+        
+        if(isWallJumping)
             return;
 
         rb.velocity = new Vector2(xInput*moveSpeed, rb.velocity.y);
@@ -107,12 +107,51 @@ public class Player : MonoBehaviour
         isWallDetected = Physics2D.Raycast(transform.position, Vector2.right * facingDirection, wallCheckDistance, whatIsGround);
     }
 
+    private void HandleJump()
+    {
+        if(isGrounded)
+            Jump();
+
+        else if(isWallDetected && !isGrounded)
+        {
+            WallJump();
+        }
+            
+        else if(canDoubleJump)
+        {
+            DoubleJump();
+        }
+            
+    }
+
     private void Jump() => rb.velocity = new Vector2(rb.velocity.x, jumpForce);
     
     private void DoubleJump()
     {
+        isWallJumping = false;
         canDoubleJump = false;
         rb.velocity = new Vector2(rb.velocity.x, doubleJumpForce);
+    }
+
+    private void WallJump()
+    {
+        rb.velocity = new Vector2(wallJumpForce.x * -facingDirection, wallJumpForce.y);
+        
+        Flip();
+        
+        StopAllCoroutines();
+        StartCoroutine(WallJumpRoutine());
+
+    }
+
+    private IEnumerator WallJumpRoutine()
+    {
+        isWallJumping = true;
+
+        yield return new WaitForSeconds(wallJumpDuration);
+
+        isWallJumping = false;
+
     }
 
 
