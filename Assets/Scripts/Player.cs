@@ -32,6 +32,9 @@ public class Player : MonoBehaviour
     private float bufferJumpActivated = -1;
     [SerializeField] private float coyoteJumpWindow = .5f;
     private float coyoteJumpActivated = -1;
+    
+    [Header("VFX")]
+    [SerializeField] private GameObject deathVFX;
 
 
     [Header("Colision")]
@@ -88,6 +91,12 @@ public class Player : MonoBehaviour
         isKnocked = true;
         yield return new WaitForSeconds(KnockbackDuration);
         isKnocked = false;
+    }
+
+    public void Die()
+    {
+        GameObject newDeathVFX = Instantiate(deathVFX, transform.position, UnityEngine.Quaternion.identity);
+        Destroy(gameObject);
     }
 
     private void HandleMovement()
