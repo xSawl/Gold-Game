@@ -10,6 +10,7 @@ public class Player : MonoBehaviour
 {
     private Rigidbody2D rb;
     private Animator anim;
+    private CapsuleCollider2D cd;
 
     private bool canBeControlled = false;
 
@@ -17,6 +18,7 @@ public class Player : MonoBehaviour
     [SerializeField] private float moveSpeed;
     [SerializeField] private float jumpForce;
     [SerializeField] private float doubleJumpForce;
+    private float defaultGravityScale;
     private bool canDoubleJump;
 
     [Header("Wall Interractions")]
@@ -56,7 +58,14 @@ public class Player : MonoBehaviour
     private void Awake() 
     {
         rb = GetComponent<Rigidbody2D>();
+        cd = GetComponent<CapsuleCollider2D>();
         anim = GetComponentInChildren<Animator>();
+    }
+
+    private void Start()
+    {
+        defaultGravityScale = rb.gravityScale;
+        RespawnFinished(false);
     }
 
     void Update()
@@ -65,6 +74,9 @@ public class Player : MonoBehaviour
             Knockback();
 
         UpdateInAirStatus();
+
+        if(canBeControlled == false)
+            return;
 
         if(isKnocked)
             return;
@@ -77,9 +89,21 @@ public class Player : MonoBehaviour
         HandleAnimations();
     }
 
-    private void RespawnFinished(bool finished)
+    public void RespawnFinished(bool finished)
     {
-        
+        if(finished) 
+        {
+            rb.gravityScale = defaultGravityScale;
+            canBeControlled = true;
+            cd.enabled = true;
+        }
+
+        else
+        {
+            rb.gravityScale = 0;
+            canBeControlled = false;
+            cd.enabled = false;
+        }
     }
 
     public void Knockback()
