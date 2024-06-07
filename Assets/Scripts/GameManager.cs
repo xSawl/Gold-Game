@@ -26,6 +26,7 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
     }
 
+    public void UpdateRespawnPosition(Transform newRespawnPoint) => respawnPoint = newRespawnPoint;
     public void RespawnPlayer() => StartCoroutine(RespawnRoutine());
 
     private IEnumerator RespawnRoutine()
