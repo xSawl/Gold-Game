@@ -11,6 +11,8 @@ public class Player : MonoBehaviour
     private Rigidbody2D rb;
     private Animator anim;
 
+    private bool canBeControlled = false;
+
     [Header("Movement")]
     [SerializeField] private float moveSpeed;
     [SerializeField] private float jumpForce;
@@ -75,6 +77,11 @@ public class Player : MonoBehaviour
         HandleAnimations();
     }
 
+    private void RespawnFinished(bool finished)
+    {
+        
+    }
+
     public void Knockback()
     {
         if(isKnocked)
@@ -98,6 +105,7 @@ public class Player : MonoBehaviour
         GameObject newDeathVFX = Instantiate(deathVFX, transform.position, UnityEngine.Quaternion.identity);
         Destroy(gameObject);
     }
+
 
     private void HandleMovement()
     {   
