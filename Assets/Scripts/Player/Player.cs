@@ -116,16 +116,18 @@ public class Player : MonoBehaviour
             return;
         
         StartCoroutine(KnockbackRoutine());
-        anim.SetTrigger("knockback");
-
         rb.velocity = new Vector2(knockbackPower.x * -facingDirection, knockbackPower.y);
     }
 
     private IEnumerator KnockbackRoutine()
     {
         isKnocked = true;
+        anim.SetBool("isKnocked", true);
+
         yield return new WaitForSeconds(knockbackDuration);
+        
         isKnocked = false;
+        anim.SetBool("isKnocked", false);
     }
 
     public void Die()
