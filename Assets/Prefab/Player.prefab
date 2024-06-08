@@ -236,10 +236,15 @@ MonoBehaviour:
   moveSpeed: 9
   jumpForce: 14
   doubleJumpForce: 11
+  runAccelAmount: 10
+  runDeccelAmount: 20
+  accelInAir: 0.5
+  deccelInAir: 0.5
+  doConserveMomentum: 1
   wallJumpDuration: 0.6
   wallJumpForce: {x: 7, y: 14}
-  KnockbackDuration: 0.65
-  knockBackPower: {x: 4, y: 7}
+  knockbackDuration: 1
+  knockbackPower: {x: 0, y: 0}
   bufferJumpWindow: 0.2
   coyoteJumpWindow: 0.2
   deathVFX: {fileID: 5971026262488989352, guid: b3e9b0978516148fc88873f537f06d25, type: 3}

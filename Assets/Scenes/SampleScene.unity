@@ -25534,6 +25534,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4137807906835289837, guid: 9647fe8bd6a7d479da668d78f83f6837, type: 3}
+      propertyPath: runData
+      value: 
+      objectReference: {fileID: 11400000, guid: ac748c637b65e5f4ca793d66b3285caa, type: 2}
+    - target: {fileID: 4137807906835289837, guid: 9647fe8bd6a7d479da668d78f83f6837, type: 3}
+      propertyPath: accelInAir
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4137807906835289837, guid: 9647fe8bd6a7d479da668d78f83f6837, type: 3}
+      propertyPath: deccelInAir
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4137807906835289837, guid: 9647fe8bd6a7d479da668d78f83f6837, type: 3}
+      propertyPath: runAccelAmount
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4137807906835289837, guid: 9647fe8bd6a7d479da668d78f83f6837, type: 3}
+      propertyPath: runDeccelAmount
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4137807906835289837, guid: 9647fe8bd6a7d479da668d78f83f6837, type: 3}
+      propertyPath: doConserveMomentum
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7729834232518946839, guid: 9647fe8bd6a7d479da668d78f83f6837, type: 3}
       propertyPath: m_LocalPosition.x
       value: -17.08

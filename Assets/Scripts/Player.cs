@@ -1,10 +1,5 @@
 using System.Collections;
-using System.Collections.Generic;
-using System.IO.Compression;
-using System.Numerics;
-using TreeEditor;
 using UnityEngine;
-using Vector2 = UnityEngine.Vector2;
 
 public class Player : MonoBehaviour
 {
@@ -21,27 +16,33 @@ public class Player : MonoBehaviour
     private float defaultGravityScale;
     private bool canDoubleJump;
 
-    [Header("Wall Interractions")]
-    [SerializeField] private float wallJumpDuration = .6f;
+    [Header("Acceleration")]
+    [SerializeField] private float runAccelAmount = 10f;
+    [SerializeField] private float runDeccelAmount = 20f;
+    [SerializeField] private float accelInAir = 0.5f;
+    [SerializeField] private float deccelInAir = 0.5f;
+    [SerializeField] private bool doConserveMomentum = true;
+
+    [Header("Wall Interactions")]
+    [SerializeField] private float wallJumpDuration = 0.6f;
     [SerializeField] private Vector2 wallJumpForce;
     private bool isWallJumping;
 
     [Header("Knockback")]
-    [SerializeField] private float KnockbackDuration =1;
-    [SerializeField] private Vector2 knockBackPower;
+    [SerializeField] private float knockbackDuration = 1f;
+    [SerializeField] private Vector2 knockbackPower;
     private bool isKnocked;
 
     [Header("Jump")]
-    [SerializeField] private float bufferJumpWindow = .25f;
-    private float bufferJumpActivated = -1;
-    [SerializeField] private float coyoteJumpWindow = .5f;
-    private float coyoteJumpActivated = -1;
-    
+    [SerializeField] private float bufferJumpWindow = 0.25f;
+    private float bufferJumpActivated = -1f;
+    [SerializeField] private float coyoteJumpWindow = 0.5f;
+    private float coyoteJumpActivated = -1f;
+
     [Header("VFX")]
     [SerializeField] private GameObject deathVFX;
 
-
-    [Header("Colision")]
+    [Header("Collision")]
     [SerializeField] private float groundCheckDistance;
     [SerializeField] private float wallCheckDistance;
     [SerializeField] private LayerMask whatIsGround;
@@ -68,36 +69,39 @@ public class Player : MonoBehaviour
         RespawnFinished(false);
     }
 
-    void Update()
+    private void Update()
     {
-        if(Input.GetKeyDown(KeyCode.C))
+        if (Input.GetKeyDown(KeyCode.C))
             Knockback();
 
         UpdateInAirStatus();
 
-        if(canBeControlled == false)
-            return;
-
-        if(isKnocked)
+        if (!canBeControlled || isKnocked)
             return;
 
         HandleInput();
-        HandleWallSlide();
-        HandleMovement();
         HandleFlip();
-        HandleColsions();
         HandleAnimations();
+    }
+
+    private void FixedUpdate()
+    {
+        if (!canBeControlled || isKnocked)
+            return;
+
+        HandleMovement();
+        HandleWallSlide();
+        HandleCollisions();
     }
 
     public void RespawnFinished(bool finished)
     {
-        if(finished) 
+        if (finished)
         {
             rb.gravityScale = defaultGravityScale;
             canBeControlled = true;
             cd.enabled = true;
         }
-
         else
         {
             rb.gravityScale = 0;
@@ -108,56 +112,67 @@ public class Player : MonoBehaviour
 
     public void Knockback()
     {
-        if(isKnocked)
+        if (isKnocked)
             return;
-            
-        StartCoroutine(knockbackRoutine());
+        
+        StartCoroutine(KnockbackRoutine());
         anim.SetTrigger("knockback");
 
-        rb.velocity = new Vector2(knockBackPower.x * -facingDirection, knockBackPower.y);
+        rb.velocity = new Vector2(knockbackPower.x * -facingDirection, knockbackPower.y);
     }
 
-    private IEnumerator knockbackRoutine()
+    private IEnumerator KnockbackRoutine()
     {
         isKnocked = true;
-        yield return new WaitForSeconds(KnockbackDuration);
+        yield return new WaitForSeconds(knockbackDuration);
         isKnocked = false;
     }
 
     public void Die()
     {
-        GameObject newDeathVFX = Instantiate(deathVFX, transform.position, UnityEngine.Quaternion.identity);
+        Instantiate(deathVFX, transform.position, Quaternion.identity);
         Destroy(gameObject);
     }
 
-
     private void HandleMovement()
-    {   
-        if(isWallDetected)
-            return;
-        
-        if(isWallJumping)
+    {
+        if (isWallDetected || isWallJumping)
             return;
 
-        rb.velocity = new Vector2(xInput*moveSpeed, rb.velocity.y);
+        float targetSpeed = xInput * moveSpeed;
+
+        float accelRate;
+        if (isGrounded)
+            accelRate = (Mathf.Abs(targetSpeed) > 0.01f) ? runAccelAmount : runDeccelAmount;
+        else
+            accelRate = (Mathf.Abs(targetSpeed) > 0.01f) ? runAccelAmount * accelInAir : runDeccelAmount * deccelInAir;
+
+        if (doConserveMomentum && Mathf.Abs(rb.velocity.x) > Mathf.Abs(targetSpeed) && Mathf.Sign(rb.velocity.x) == Mathf.Sign(targetSpeed) && Mathf.Abs(targetSpeed) > 0.01f && !isGrounded)
+        {
+            accelRate = 0;
+        }
+
+        float speedDif = targetSpeed - rb.velocity.x;
+        float movement = speedDif * accelRate;
+        rb.AddForce(movement * Vector2.right, ForceMode2D.Force);
     }
 
     private void HandleFlip()
     {
-        if(xInput < 0 && isFacingRight || xInput > 0 && !isFacingRight)
+        if (xInput < 0 && isFacingRight || xInput > 0 && !isFacingRight)
             Flip();
     }
 
     private void HandleAnimations()
-    {          
+    {
         anim.SetFloat("xVelocity", rb.velocity.x);
         anim.SetFloat("yVelocity", rb.velocity.y);
         anim.SetBool("isGrounded", isGrounded);
         anim.SetBool("isWallDetected", isWallDetected);
     }
 
-    private void HandleColsions()
-    {          
+    private void HandleCollisions()
+    {
         isGrounded = Physics2D.Raycast(transform.position, Vector2.down, groundCheckDistance, whatIsGround);
         isWallDetected = Physics2D.Raycast(transform.position, Vector2.right * facingDirection, wallCheckDistance, whatIsGround);
     }
@@ -166,25 +181,24 @@ public class Player : MonoBehaviour
     {
         xInput = Input.GetAxisRaw("Horizontal");
         yInput = Input.GetAxisRaw("Vertical");
-        
-        if(Input.GetKeyDown(KeyCode.Space))
+
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             HandleJump();
             RequestBufferJump();
         }
-            
     }
-    
+
     #region Buffer & Coyote Jump
     private void RequestBufferJump()
     {
-        if(isInAir)
+        if (isInAir)
             bufferJumpActivated = Time.time;
     }
 
     private void AttemptBufferJump()
     {
-        if(Time.time < bufferJumpActivated + bufferJumpWindow) 
+        if (Time.time < bufferJumpActivated + bufferJumpWindow)
         {
             bufferJumpActivated = Time.time - 1;
             Jump();
@@ -197,20 +211,17 @@ public class Player : MonoBehaviour
 
     private void HandleJump()
     {
-        bool coyoteJumpAvailable =  Time.time < coyoteJumpActivated  + coyoteJumpWindow;
+        bool coyoteJumpAvailable = Time.time < coyoteJumpActivated + coyoteJumpWindow;
 
-        if(isGrounded || coyoteJumpAvailable) 
+        if (isGrounded || coyoteJumpAvailable)
         {
             Jump();
         }
-            
-
-        else if(isWallDetected && !isGrounded)
+        else if (isWallDetected && !isGrounded)
         {
             WallJump();
         }
-            
-        else if(canDoubleJump)
+        else if (canDoubleJump)
         {
             DoubleJump();
         }
@@ -219,7 +230,7 @@ public class Player : MonoBehaviour
     }
 
     private void Jump() => rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-    
+
     private void DoubleJump()
     {
         isWallJumping = false;
@@ -230,58 +241,52 @@ public class Player : MonoBehaviour
     private void WallJump()
     {
         rb.velocity = new Vector2(wallJumpForce.x * -facingDirection, wallJumpForce.y);
-        
         Flip();
 
         StopAllCoroutines();
         StartCoroutine(WallJumpRoutine());
-
     }
 
     private IEnumerator WallJumpRoutine()
     {
         isWallJumping = true;
-
         yield return new WaitForSeconds(wallJumpDuration);
-
         isWallJumping = false;
-
     }
 
     private void HandleWallSlide()
     {
         bool canWallSlide = isWallDetected && rb.velocity.y < 0;
-        float yModifer = yInput < 0 ? 1 :.05f;
+        float yModifier = yInput < 0 ? 1f : 0.05f;
 
-        if(canWallSlide == false)
+        if (!canWallSlide)
             return;
-        
-        rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * yModifer);
+
+        rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * yModifier);
     }
 
-    private void Flip() 
+    private void Flip()
     {
-        facingDirection = facingDirection * -1;
+        facingDirection *= -1;
         transform.Rotate(0, 180, 0);
         isFacingRight = !isFacingRight;
     }
 
     private void UpdateInAirStatus()
     {
-        if(isGrounded  && isInAir )
+        if (isGrounded && isInAir)
             HandleLanded();
 
-        if(!isGrounded && !isInAir )
+        if (!isGrounded && !isInAir)
         {
             BecomeAirborne();
-        }    
+        }
     }
 
     private void HandleLanded()
     {
         isInAir = false;
         canDoubleJump = true;
-        
         AttemptBufferJump();
     }
 
@@ -289,13 +294,13 @@ public class Player : MonoBehaviour
     {
         isInAir = true;
 
-        if(rb.velocity.y <= 0)
+        if (rb.velocity.y <= 0)
         {
             ActivateCoyoteJump();
-        } 
+        }
     }
 
-    private void OnDrawGizmos() 
+    private void OnDrawGizmos()
     {
         Gizmos.DrawLine(transform.position, new Vector2(transform.position.x, transform.position.y - groundCheckDistance));
         Gizmos.DrawLine(transform.position, new Vector2(transform.position.x + (facingDirection * wallCheckDistance), transform.position.y));
