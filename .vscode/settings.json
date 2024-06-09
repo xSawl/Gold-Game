@@ -56,5 +56,8 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Gold-Game.sln"
+    "dotnet.defaultSolution": "Gold-Game.sln",
+    "accessibility.signals.taskFailed": {
+        "sound": "off"
+    }
 }

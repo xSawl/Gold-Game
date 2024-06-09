@@ -23,6 +23,11 @@ public class Player : MonoBehaviour
     [SerializeField] private float deccelInAir = 0.5f;
     [SerializeField] private bool doConserveMomentum = true;
 
+    [Header("Bonus Jump Apex")]
+    [SerializeField] private float jumpHangTimeThreshold = 0.1f;
+    [SerializeField] private float jumpHangAccelerationMult = 1.2f;
+    [SerializeField] private float jumpHangMaxSpeedMult = 1.1f;
+
     [Header("Wall Interactions")]
     [SerializeField] private float wallJumpDuration = 0.6f;
     [SerializeField] private Vector2 wallJumpForce;
@@ -56,6 +61,10 @@ public class Player : MonoBehaviour
     private bool isFacingRight = true;
     private int facingDirection = 1;
 
+    private bool IsJumping => !isGrounded && rb.velocity.y > 0;
+    private bool IsWallJumping => isWallJumping;
+    private bool IsJumpFalling => !isGrounded && rb.velocity.y < 0;
+
     private void Awake() 
     {
         rb = GetComponent<Rigidbody2D>();
@@ -71,9 +80,6 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.C))
-            Knockback();
-
         UpdateInAirStatus();
 
         if (!canBeControlled || isKnocked)
@@ -110,13 +116,17 @@ public class Player : MonoBehaviour
         }
     }
 
-    public void Knockback()
+    public void Knockback(float sourceDamageXPosition)
     {
+        float knockbackDirection = 1;
+
+        if(transform.position.x < sourceDamageXPosition)
+            knockbackDirection = -1;
         if (isKnocked)
             return;
         
         StartCoroutine(KnockbackRoutine());
-        rb.velocity = new Vector2(knockbackPower.x * -facingDirection, knockbackPower.y);
+        rb.velocity = new Vector2(knockbackPower.x * knockbackDirection, knockbackPower.y);
     }
 
     private IEnumerator KnockbackRoutine()
@@ -152,6 +162,12 @@ public class Player : MonoBehaviour
         if (doConserveMomentum && Mathf.Abs(rb.velocity.x) > Mathf.Abs(targetSpeed) && Mathf.Sign(rb.velocity.x) == Mathf.Sign(targetSpeed) && Mathf.Abs(targetSpeed) > 0.01f && !isGrounded)
         {
             accelRate = 0;
+        }
+
+        if ((IsJumping || IsWallJumping || IsJumpFalling) && Mathf.Abs(rb.velocity.y) < jumpHangTimeThreshold)
+        {
+            accelRate *= jumpHangAccelerationMult;
+            targetSpeed *= jumpHangMaxSpeedMult;
         }
 
         float speedDif = targetSpeed - rb.velocity.x;
