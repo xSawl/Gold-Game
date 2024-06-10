@@ -10,8 +10,8 @@ public class Trap_SpikedBall : MonoBehaviour
 
     private void Start()
     {
-        Vector2 pushVector = new Vector2(pushForce, 0);
-        spikeRB.AddForce(pushVector, ForceMode2D.Impulse);
+        float randomDelay = Random.Range(0, .6f);
+        Invoke(nameof(ActivateSpikeMovement), randomDelay);
     }
 
     private void FixedUpdate()
@@ -22,5 +22,11 @@ public class Trap_SpikedBall : MonoBehaviour
             Vector2 maintainForce = new Vector2(pushForce * Mathf.Sign(spikeRB.velocity.x), 0);
             spikeRB.AddForce(maintainForce, ForceMode2D.Force);
         }
+    }
+
+    private void ActivateSpikeMovement()
+    {
+        Vector2 pushVector = new Vector2(pushForce, 0);
+        spikeRB.AddForce(pushVector, ForceMode2D.Impulse);
     }
 }
